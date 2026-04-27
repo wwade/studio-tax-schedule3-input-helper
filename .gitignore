@@ -1,0 +1,13 @@
+# Local tax/input data
+*.csv
+*.tsv
+*.xlsx
+*.xls
+
+# Generated/log output
+*.log
+*.tmp
+
+# OS/editor files
+.DS_Store
+Thumbs.db
