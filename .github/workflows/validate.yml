@@ -1,0 +1,42 @@
+name: Validate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  powershell:
+    name: PowerShell validation
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Parse PowerShell script
+        shell: pwsh
+        run: |
+          $errors = $null
+          $tokens = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "$PWD\Import-StudioTaxSchedule3.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+
+          if ($errors.Count -gt 0) {
+            $errors | Format-List | Out-String | Write-Error
+            exit 1
+          }
+
+      - name: Run preview with sample CSV
+        shell: pwsh
+        run: |
+          $sampleCsv = Join-Path $env:RUNNER_TEMP 'schedule3-sample.csv'
+          @'
+          Number,Name of fund/corp.,Year of acquisition,Proceeds of disposition,Adjusted cost base,Outlays and expenses,Gain or Loss
+          10,Example Fund,2025,100.00,80.00,5.00,15.00
+          20,Example Corp,2025,250.50,300.25,0.00,-49.75
+          '@.Trim() | Set-Content -LiteralPath $sampleCsv -Encoding utf8
+
+          .\Import-StudioTaxSchedule3.ps1 $sampleCsv -Preview
